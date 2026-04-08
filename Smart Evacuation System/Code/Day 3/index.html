@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Evacuation Live Dashboard</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
+</head>
+<body>
+  <div class="shell">
+    <header class="hero">
+      <p class="kicker">Smart Emergency Evacuation and Occupancy Analysis Framework</p>
+      <h1>Live Evacuation Dashboard</h1>
+      <p class="subtitle">Real-time SAFE / CAUTION / EVACUATE decisions with incident history and live ThingSpeak polling.</p>
+    </header>
+
+    <main class="layout">
+      <section class="panel input-panel">
+        <h2>Input Control</h2>
+        <div class="tabs">
+          <button type="button" class="tab active" data-mode="manual">Manual</button>
+          <button type="button" class="tab" data-mode="thingspeak">ThingSpeak</button>
+        </div>
+
+        <form id="manual-form" class="form-grid">
+          <label>Temperature C<input type="number" name="temp_c" step="0.1" value="36"></label>
+          <label>Humidity %<input type="number" name="hum_pct" step="0.1" value="72"></label>
+          <label>PIR A (0/1)<input type="number" name="pir_a" min="0" max="1" value="1"></label>
+          <label>PIR B (0/1)<input type="number" name="pir_b" min="0" max="1" value="0"></label>
+          <label>PIR C (0/1)<input type="number" name="pir_c" min="0" max="1" value="0"></label>
+          <label>Sound Digital (0/1)<input type="number" name="sound_d" min="0" max="1" value="0"></label>
+          <label>Sound Analog<input type="number" name="sound_a" step="0.1" value="1200"></label>
+          <label>Gas Analog<input type="number" name="gas_a" step="0.1" value="650"></label>
+          <label>Gas Digital (0/1)<input type="number" name="gas_d" min="0" max="1" value="0"></label>
+        </form>
+
+        <form id="thingspeak-form" class="form-grid hidden">
+          <label>Channel ID<input type="text" name="channel_id" id="channel-id"></label>
+          <label>Read API Key<input type="text" name="read_api_key" id="read-api-key"></label>
+          <label>Live Poll (seconds)<input type="number" id="live-interval" min="2" value="10"></label>
+          <label class="checkbox-row">
+            <input type="checkbox" id="live-enabled">
+            Enable continuous polling
+          </label>
+        </form>
+
+        <div class="actions">
+          <label class="checkbox">
+            <input type="checkbox" id="upload-toggle">
+            Upload final state to ThingSpeak
+          </label>
+          <button type="button" id="predict-btn">Run Prediction</button>
+        </div>
+      </section>
+
+      <section class="panel output-panel">
+        <div class="status-head">
+          <h2>Latest Decision</h2>
+          <span id="state-badge" class="badge neutral">Waiting</span>
+        </div>
+        <p id="status-line" class="status-line">Submit input to start the dashboard feed.</p>
+
+        <div class="cards">
+          <div class="card"><h3>Firmware</h3><p id="firmware-state">-</p></div>
+          <div class="card"><h3>ML State</h3><p id="ml-state">-</p></div>
+          <div class="card"><h3>ML Confidence</h3><p id="ml-confidence">-</p></div>
+          <div class="card"><h3>Source</h3><p id="source-value">-</p></div>
+        </div>
+
+        <div class="stats">
+          <div class="chip safe-chip">SAFE <span id="count-safe">0</span></div>
+          <div class="chip caution-chip">CAUTION <span id="count-caution">0</span></div>
+          <div class="chip evacuate-chip">EVACUATE <span id="count-evacuate">0</span></div>
+          <div class="chip total-chip">TOTAL <span id="count-total">0</span></div>
+        </div>
+
+        <div class="json-wrap">
+          <h3>Raw JSON</h3>
+          <pre id="raw-json">{}</pre>
+        </div>
+      </section>
+
+      <section class="panel history-panel">
+        <div class="history-head">
+          <h2>Recent Incidents</h2>
+          <button type="button" id="refresh-history" class="secondary-btn">Refresh History</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Logged UTC</th>
+                <th>Source</th>
+                <th>Final</th>
+                <th>Firmware</th>
+                <th>ML</th>
+                <th>Temp</th>
+                <th>Gas</th>
+              </tr>
+            </thead>
+            <tbody id="history-body">
+              <tr><td colspan="7" class="empty">No incidents yet.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
