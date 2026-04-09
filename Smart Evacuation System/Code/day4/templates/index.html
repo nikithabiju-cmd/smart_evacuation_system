@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Evacuation Live Dashboard</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
+</head>
+<body>
+  <div class="shell state-neutral" id="dashboard-shell">
+    <header class="hero panel">
+      <div>
+        <p class="kicker">Smart Emergency Evacuation and Occupancy Analysis Framework</p>
+        <h1>Realtime Multi-Floor Command View</h1>
+        <p class="subtitle">All 3 floor states live with drill-down sensor details.</p>
+      </div>
+      <div class="hero-meta">
+        <div class="pill" id="db-pill">DB: -</div>
+        <div class="pill" id="live-pill">Stream: Connecting...</div>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="panel floor-overview-panel">
+        <div class="section-head">
+          <h2>Floor State Overview</h2>
+        </div>
+        <div class="floor-cards">
+          <article class="floor-card" id="floor-card-0">
+            <div class="floor-head">
+              <h3>Floor 0</h3>
+              <span class="badge neutral" id="floor-badge-0">WAITING</span>
+            </div>
+            <p class="floor-line"><span>Temp</span><strong id="floor-temp-0">-</strong></p>
+            <p class="floor-line"><span>Humidity</span><strong id="floor-hum-0">-</strong></p>
+            <p class="floor-line"><span>Gas</span><strong id="floor-gas-0">-</strong></p>
+            <p class="floor-line"><span>Sound</span><strong id="floor-sound-0">-</strong></p>
+          </article>
+
+          <article class="floor-card" id="floor-card-1">
+            <div class="floor-head">
+              <h3>Floor 1</h3>
+              <span class="badge neutral" id="floor-badge-1">WAITING</span>
+            </div>
+            <p class="floor-line"><span>Temp</span><strong id="floor-temp-1">-</strong></p>
+            <p class="floor-line"><span>Humidity</span><strong id="floor-hum-1">-</strong></p>
+            <p class="floor-line"><span>Gas</span><strong id="floor-gas-1">-</strong></p>
+            <p class="floor-line"><span>Sound</span><strong id="floor-sound-1">-</strong></p>
+          </article>
+
+          <article class="floor-card" id="floor-card-2">
+            <div class="floor-head">
+              <h3>Floor 2</h3>
+              <span class="badge neutral" id="floor-badge-2">WAITING</span>
+            </div>
+            <p class="floor-line"><span>Temp</span><strong id="floor-temp-2">-</strong></p>
+            <p class="floor-line"><span>Humidity</span><strong id="floor-hum-2">-</strong></p>
+            <p class="floor-line"><span>Gas</span><strong id="floor-gas-2">-</strong></p>
+            <p class="floor-line"><span>Sound</span><strong id="floor-sound-2">-</strong></p>
+          </article>
+        </div>
+      </section>
+
+      <section class="panel floor-detail-panel">
+        <div class="section-head">
+          <h2>Selected Floor Detail</h2>
+          <select id="floor-select">
+            <option value="0">Floor 0</option>
+            <option value="1">Floor 1</option>
+            <option value="2">Floor 2</option>
+          </select>
+        </div>
+        <p id="status-line" class="status-line">Waiting for live floor data.</p>
+        <div class="decision-meta">
+          <div class="kv"><span>Current State</span><strong id="detail-state">-</strong></div>
+          <div class="kv"><span>Logged UTC</span><strong id="logged-at">-</strong></div>
+          <div class="kv"><span>Temp C</span><strong id="detail-temp">-</strong></div>
+          <div class="kv"><span>Humidity %</span><strong id="detail-hum">-</strong></div>
+          <div class="kv"><span>Gas A / D</span><strong id="detail-gas">-</strong></div>
+          <div class="kv"><span>Sound A / D</span><strong id="detail-sound">-</strong></div>
+          <div class="kv"><span>Channel</span><strong id="channel-value">-</strong></div>
+          <div class="kv"><span>Source</span><strong id="source-value">-</strong></div>
+        </div>
+      </section>
+
+      <section class="panel controls-panel">
+        <div class="section-head">
+          <h2>Realtime Controls</h2>
+          <button type="button" id="pause-btn" class="secondary-btn">Pause</button>
+        </div>
+        <div class="control-grid">
+          <label>Stream every (sec)<input type="number" id="stream-interval" min="1" max="60" value="2"></label>
+          <label class="checkbox-row">
+            <input type="checkbox" id="ingest-enabled" checked>
+            Ingest all floors from ThingSpeak
+          </label>
+          <label class="checkbox-row">
+            <input type="checkbox" id="upload-toggle">
+            Upload final state to ThingSpeak
+          </label>
+          <label>Floor 0 Channel<input type="text" id="floor0-channel"></label>
+          <label>Floor 0 Read Key<input type="text" id="floor0-key"></label>
+          <label>Floor 1 Channel<input type="text" id="floor1-channel"></label>
+          <label>Floor 1 Read Key<input type="text" id="floor1-key"></label>
+          <label>Floor 2 Channel<input type="text" id="floor2-channel"></label>
+          <label>Floor 2 Read Key<input type="text" id="floor2-key"></label>
+        </div>
+      </section>
+
+      <section class="panel stats-panel">
+        <div class="stats">
+          <div class="chip safe-chip">SAFE <span id="count-safe">0</span></div>
+          <div class="chip caution-chip">CAUTION <span id="count-caution">0</span></div>
+          <div class="chip evacuate-chip">EVACUATE <span id="count-evacuate">0</span></div>
+          <div class="chip total-chip">TOTAL <span id="count-total">0</span></div>
+        </div>
+      </section>
+
+      <section class="panel history-panel">
+        <div class="section-head">
+          <h2>Incident Feed (Newest First)</h2>
+          <button type="button" id="refresh-history" class="secondary-btn">Reload Snapshot</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Floor</th>
+                <th>Logged UTC</th>
+                <th>Final</th>
+                <th>Temp</th>
+                <th>Humidity</th>
+                <th>Gas A</th>
+                <th>Sound A</th>
+              </tr>
+            </thead>
+            <tbody id="history-body">
+              <tr><td colspan="8" class="empty">No incidents yet.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel json-panel">
+        <div class="section-head">
+          <h2>Latest Raw Event (Selected Floor)</h2>
+        </div>
+        <pre id="raw-json">{}</pre>
+      </section>
+    </main>
+  </div>
+
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
