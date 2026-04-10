@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Evac Command</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css', v='20260409b') }}">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand-block">
+        <p class="eyebrow">Smart Evac Command</p>
+        <h1>Smart Evac Command</h1>
+        <p class="subtitle">Multi-Floor Realtime Monitor</p>
+      </div>
+      <div class="topbar-actions">
+        <div class="status-pill" id="stream-pill">
+          <span class="live-dot"></span>
+          <span id="stream-pill-text">LIVE @ row #0</span>
+        </div>
+        <div class="status-pill db-pill" id="db-pill">DB: SQLITE</div>
+        <button class="control-button ghost" id="topbar-pause-btn" type="button">Pause</button>
+        <button class="control-button sidebar-toggle" id="sidebar-toggle" type="button" aria-expanded="true" aria-controls="control-sidebar">Controls</button>
+      </div>
+    </header>
+
+    <div class="alert-region" id="alert-region"></div>
+    <div class="toast-region" id="toast-region"></div>
+
+    <div class="dashboard-frame sidebar-open" id="dashboard-frame">
+      <main class="dashboard-grid">
+        <section class="overview-section">
+          <div class="section-head">
+            <h2>Floor Overview</h2>
+          </div>
+          <div class="floor-grid" id="floor-grid"></div>
+        </section>
+
+        <section class="stats-section">
+          <div class="stats-bar" id="stats-bar"></div>
+        </section>
+
+        <section class="detail-charts-section">
+          <div class="detail-panel card">
+            <div class="section-head">
+              <h2>Selected Floor Detail</h2>
+            </div>
+            <div class="detail-header">
+              <div>
+                <p class="detail-floor-label" id="detail-floor-label">Floor 0</p>
+                <p class="detail-floor-meta" id="detail-floor-meta">Awaiting floor telemetry.</p>
+              </div>
+              <span class="status-badge neutral" id="detail-state-badge">WAITING</span>
+            </div>
+            <div class="detail-info-grid" id="detail-info-grid"></div>
+            <div class="json-viewer-wrap">
+              <div class="section-head compact">
+                <h2>Raw JSON Event</h2>
+              </div>
+              <pre class="json-viewer" id="raw-json-viewer">{}</pre>
+            </div>
+          </div>
+
+          <div class="charts-panel card">
+            <div class="chart-block">
+              <div class="chart-head">
+                <h2>Sensor Trend Chart</h2>
+                <div class="legend-pills" id="trend-legend"></div>
+              </div>
+              <div class="chart-canvas-wrap trend-wrap">
+                <canvas id="trend-chart"></canvas>
+              </div>
+            </div>
+
+            <div class="chart-block distribution-block">
+              <div class="chart-head">
+                <h2>Floor State Distribution</h2>
+              </div>
+              <div class="chart-canvas-wrap doughnut-wrap">
+                <canvas id="distribution-chart" width="200" height="200"></canvas>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="incident-section card">
+          <div class="section-head">
+            <h2>Incident Feed</h2>
+            <button class="control-button ghost" id="reload-history-btn" type="button">Reload Snapshot</button>
+          </div>
+          <div class="incident-table-wrap">
+            <table class="incident-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Floor</th>
+                  <th>Logged UTC</th>
+                  <th>Final State</th>
+                  <th>Temp</th>
+                  <th>Humidity</th>
+                  <th>Gas A</th>
+                  <th>Sound A</th>
+                </tr>
+              </thead>
+              <tbody id="incident-body"></tbody>
+            </table>
+          </div>
+          <div class="load-more-wrap">
+            <button class="control-button" id="load-more-btn" type="button">Load More</button>
+          </div>
+        </section>
+      </main>
+
+      <aside class="control-sidebar" id="control-sidebar">
+        <div class="section-head">
+          <h2>Realtime Controls</h2>
+        </div>
+        <div class="sidebar-form">
+          <label class="field-block">
+            <span>Stream Interval (Seconds)</span>
+            <input type="number" id="stream-interval-input" min="1" value="2">
+          </label>
+
+          <label class="checkbox-block">
+            <input type="checkbox" id="ingest-toggle" checked>
+            <span>Ingest all floors from ThingSpeak</span>
+          </label>
+
+          <label class="checkbox-block">
+            <input type="checkbox" id="upload-toggle">
+            <span>Upload final state to ThingSpeak</span>
+          </label>
+
+          <div class="channel-group">
+            <p class="group-title">Floor 0</p>
+            <label class="field-block">
+              <span>ThingSpeak Channel</span>
+              <input type="text" id="channel-0-input">
+            </label>
+            <label class="field-block">
+              <span>Read Key</span>
+              <input type="text" id="key-0-input">
+            </label>
+          </div>
+
+          <div class="channel-group">
+            <p class="group-title">Floor 1</p>
+            <label class="field-block">
+              <span>ThingSpeak Channel</span>
+              <input type="text" id="channel-1-input">
+            </label>
+            <label class="field-block">
+              <span>Read Key</span>
+              <input type="text" id="key-1-input">
+            </label>
+          </div>
+
+          <div class="channel-group">
+            <p class="group-title">Floor 2</p>
+            <label class="field-block">
+              <span>ThingSpeak Channel</span>
+              <input type="text" id="channel-2-input">
+            </label>
+            <label class="field-block">
+              <span>Read Key</span>
+              <input type="text" id="key-2-input">
+            </label>
+          </div>
+
+          <button class="control-button" id="sidebar-pause-btn" type="button">Pause</button>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+  <script src="{{ url_for('static', filename='app.js', v='20260409b') }}"></script>
+</body>
+</html>
